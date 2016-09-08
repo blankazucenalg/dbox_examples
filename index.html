@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dbox.js</title>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3-queue.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <script type="text/javascript" src="dbox.js"></script>
+    <link rel="stylesheet" type="text/css" src="dbox.css"></link>
+  </head>
+  <body>
+    <h1>Dbox</h1>
+    <div id="scatter"></div>
+    <div id="columns"></div>
+    <div id="linesAndCircles"></div>
+    <div id="quantileAndCircles"></div>
+    <style>
+      .d3-tip {
+        background: #eee;
+        padding: 5px;
+        border-radius: 5px;
+      }
+      .axis path,
+      .axis line {
+        fill: none;
+        stroke: #666;
+        shape-rendering: crispEdges;
+      }
+
+    </style>
+    <script type="text/javascript">
+      var data = [];
+      for(var i = 0; i < 40; i++){
+        data.push({x: Math.random() * 20, y: Math.random() * 20, name: ('Dato ' + i)});
+      }
+      config = {
+          'bindTo': '#scatter',
+          'size':{
+            'width': 555,
+            'height':400,
+            'margin':{top: 20, right: 50, bottom: 50, left: 50},
+          },
+          'template':'dbox-gray',
+          'chart':{
+            'title': "Scatter",
+            'subtitle': '',
+          },
+          'data':{
+            'raw': data,
+            parser:function(d) {
+              d.color = 'steelblue';
+              return d;
+            },
+            tip:function(d) {
+              return d.name + "<br>("+ d.x.toFixed(2) +" ,"+ d.y.toFixed(2) +")";
+            },
+            mouseover: function(d){
+            },
+            mouseout: function(d){
+
+            },
+          },
+          'xAxis':{
+            'scale' : 'linear',
+            'text': ''//subcategory.title
+          },
+          'yAxis':{
+            'visible':true,
+            'scale' : 'linear',
+            'text': '',//layer.first.variable.title
+            'ticks':{
+              'enabled':true
+            }
+          },
+          'plotOptions':{
+            'scatter':{
+              'draw45Line':false
+            }
+          }
+        }
+
+        var scatter = dbox.scatter(config);
+        scatter.generate();
+
+        var nested = d3.nest().key(function(d){ return d.x.toFixed(0); }).rollup(function(leaves){ return d3.sum(leaves, function(d){return d.y;}); }).entries(data);
+
+        var config = {
+          'bindTo': '#columns',
+          'style':'columns',
+          'size':{
+            'width':  555,
+            'height':400,
+            'margin':{top: 20, right: 55, bottom: 100, left: 40},
+          },
+          'template':'dbox-gray',
+          'chart':{
+            'title': "Columns",
+            'subtitle':'',
+          },
+          'data':{
+            'raw': nested,
+            'sort':{
+              'axis': 'y',
+              'order': 'desc', // asc - 1, desc  -1 ,
+              //'visible':false,
+            },
+            parser:function(d) {
+              var n = {};
+              n.x = +d.key;
+              n.y = +d.values;
+              n.color = '#fc3'
+              return n;
+            },
+            tip: function(d) {
+              return d.x.toFixed(0) +"<br>"+ d.y.toFixed(2);
+            },
+            mouseover: function(d){
+              var vm = this;
+              vm._chart._tip.show(d);
+            },
+            mouseout: function(d){
+              var vm = this;
+              vm._chart._tip.hide();
+            }
+          },
+          'xAxis':{
+            'scale' : 'linear',
+            'text'  : '',
+            'ticks':{
+              'enabled':true
+            }
+          },
+          'yAxis':{
+            'scale' : 'linear',
+            'text'  : '',//subcategory.title,
+            'ticks':{
+              'enabled':true,
+              'style':'straightLine'
+            }
+          },
+          'events':{
+            'load': function(bars){
+              var bar = bars.select(data.district_a);
+              if( bar !== false){
+                bar.attr('fill', '#da2b46')
+              };
+            }
+          },
+          'plotOptions':{
+            'bars':{
+              
+            }
+          }
+        }
+
+        var bars = dbox.bars(config);
+        bars.generate();
+
+        config = {
+          'bindTo': '#linesAndCircles',
+          'style':'lineAndCircles',
+          'size':{
+            'width': 555,
+            'height':400,
+            'margin':{top: 20, right: 50, bottom: 100, left: 40},
+          },
+          'template':'dbox-gray',
+          'chart':{
+            "title": "Lines and circles",
+            "subtitle":'',
+          },
+          'data':{
+            'raw': nested,
+            'sort':{
+              'axis': 'y',
+              'order': 'desc', // asc - 1, desc  -1 ,
+              //'visible':false,
+            },
+            parser:function(d) {
+              var n = {};
+              n.x = +d.key;
+              n.y = +d.values;
+              n.color = '#fda709'
+              return n;
+            },
+            tip:function(d) {
+              return d.x +"<br>"+ d.y.toFixed(2);
+            },
+            'highlight':{
+              'axis':'x',
+              'value':'Lower Dir'
+            },
+            mouseover: function(d){
+              var vm = this;
+              vm._chart._tip.show(d);
+            },
+            mouseout: function(d){
+              var vm = this;
+              vm._chart._tip.hide();
+            },
+          },
+          'xAxis':{
+            'scale' : 'ordinal',
+            'text'  : '',
+          },
+          'yAxis':{
+            'scale' : 'linear',
+            'text'  : '',//subcategory.title,
+            'ticks':{
+              'enabled':true,
+              'style':'straightLine'
+            }
+          },
+          'events':{
+            'load': function(bars){
+              //console.log('chart loaded',bars);
+            }
+          }
+
+        }
+
+        var linesAndCircles = dbox.bars(config);
+        linesAndCircles.generate();
+
+        var config = {
+          'bindTo': '#quantileAndCircles',
+          'style':'quantilesAndCircles',
+          'size':{
+            'width': 555,
+            'height': 400,
+            'margin':{top: 20, right: 10, bottom: 100, left: 40},
+          },
+          'data':{
+            'raw': data,
+            'sort':{
+              'axis': 'x',
+              'order': 'asc', // asc - 1, desc  -1 ,
+              //'visible':false,
+            },
+            parser:function(d) {            
+              var n = {};
+              n.x = +d.x;
+              n.y = +d.y;
+              n.color = "yellowgreen"
+
+              return n;
+            },
+            tip: function(d) {
+              return d.x +"<br>"+ d.y.toFixed(2);
+            },
+            'highlight':{
+              'axis':'x',
+              'value':'Lower Dir'
+            },
+            mouseover: function(d){
+              var vm = this;
+              vm._chart._tip.show(d);
+            },
+            mouseout: function(d){
+              var vm = this;
+              vm._chart._tip.hide();
+            }
+          },
+          'xAxis':{
+            'scale' : 'quantile',
+            'text'  : '',
+            'buckets': 5
+          },
+          'yAxis':{
+            'scale' : 'linear',
+            'text'  : '',
+            'ticks':{
+              'enabled':true,
+              'style':'straightLine'
+            }
+          },
+          'events':{
+            'load': function(bars){
+            }
+          }
+        }
+
+        var quantileAndCircles = dbox.bars(config);
+        //quantileAndCircles.generate();
+
+
+    </script>
+    
+  </body>
+</html>
